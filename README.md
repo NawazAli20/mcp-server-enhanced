@@ -1,304 +1,270 @@
-
 # Course Assistant MCP Server
 
-Build your first custom Model Context Protocol (MCP) server with Python and FastMCP. This YouTube class shows how to expose two Python functions as MCP tools, read a local course catalog, and test the tools in MCP Inspector.
+![MCP Resources and Prompts](assets/mcp-resources-prompts-class2.png)
 
-| Tool | Purpose |
-| --- | --- |
-| `get_course_list()` | Return the ID and title of each available course. |
-| `get_course_details(course_id)` | Return the complete record for a matching course, or an error message with available IDs. |
+A small teaching project that demonstrates how to build a Python [Model Context Protocol](https://modelcontextprotocol.io/) server and connect it to a LangChain agent.
 
-This class covers **tools only**, using **stdio** transport. Resources and prompts will be covered in the next class.
+The server exposes the same course catalog through three MCP primitives:
+
+| Primitive | Purpose | Examples |
+| --- | --- | --- |
+| **Tools** | Let an agent perform an operation | `get_course_list`, `get_course_details` |
+| **Resources** | Give a client addressable course data | `course://catalog`, `courses://cs466` |
+| **Prompts** | Provide reusable task instructions | `course_summary`, `all_course_summary` |
+
+This repository accompanies **Class 2: MCP Resources and Prompts** in the YouTube lecture series.
+
+## What you will learn
+
+- Build an MCP server with Python and `FastMCP`
+- Define tools, resources, and reusable prompts
+- Test the server with MCP Inspector
+- Load MCP tools, prompts, and resources from LangChain
+- Convert LangChain `Blob` resources into text
+- Pass MCP prompt messages and resource context to an agent
+
+## Architecture
+
+```mermaid
+flowchart LR
+    U[User request] --> A[LangChain agent]
+    A <--> C[MultiServerMCPClient]
+    C <-- stdio --> S[Course Assistant MCP server]
+    S --> T[Tools]
+    S --> R[Resources]
+    S --> P[Prompts]
+    T --> D[(data/courses.json)]
+    R --> D
+```
 
 ## Project structure
 
 ```text
-course-assistant-mcp/
-├── README.md
-├── mcpserver.py
+MCP-Server/
+├── server.py
+├── mcpAgent.ipynb
 ├── data/
 │   └── courses.json
-├── pyproject.toml       # Created by uv init
-└── uv.lock             # Created by uv add; commit this for repeatable installs
+└── assets/
+    └── mcp-resources-prompts-class2.png
 ```
 
-`data/courses.json` is supplied in this GitHub repository. Use the supplied file; there is no separate dataset download. It contains a JSON array of course objects, each with at least `course_id` and `title`. Additional fields are returned by the details tool unchanged.
+## Requirements
 
-## Prerequisites
+- Python 3.11 or later
+- [`uv`](https://docs.astral.sh/uv/)
+- Node.js, required by MCP Inspector
+- JupyterLab or VS Code for `mcpAgent.ipynb`
+- Ollama with `gemma4:latest`, or another tool capable chat model
 
-- Python 3.10 or newer; the setup below uses Python 3.12.
-- `uv` to manage Python and project dependencies.
-- A current Node.js LTS installation, including `npm` and `npx`, to launch MCP Inspector. Download it from [Node.js](https://nodejs.org/en/download).
-- Git if you want to clone the repository; GitHub's **Code → Download ZIP** also works.
-- A terminal and a code editor.
+The notebook also initializes Groq and OpenAI models. Their API keys are only needed if you use those models.
 
-No API key, paid service, or LLM client is needed to test these tools in Inspector.
+## Setup
 
-## 1. Install uv
-
-Use the command for your operating system from the [official uv installation guide](https://docs.astral.sh/uv/getting-started/installation/).
-
-**macOS / Linux:**
+Clone the repository and enter the project directory:
 
 ```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
+git clone <your-repository-url>
+cd MCP-Server
 ```
 
-**Windows PowerShell:**
-
-```powershell
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-```
-
-Open a new terminal after installation, then check:
+Create the environment and install the packages:
 
 ```bash
-uv --version
-node --version
-npm --version
-npx --version
+uv init
+uv add mcp langchain langchain-mcp-adapters python-dotenv jupyter
 ```
 
-## 2. Set up the project and install MCP
-
-Download or clone this repository using the URL in its GitHub **Code** menu. Open a terminal in the downloaded repository folder. Run all remaining commands from that folder.
-
-Install Python if needed:
+If you use the Ollama model from the notebook:
 
 ```bash
-uv python install 3.12
+ollama pull gemma4:latest
 ```
 
-### First-time setup for the class
+For Groq or OpenAI models, create a `.env` file:
 
-If the folder does not yet contain `pyproject.toml`, initialize it:
+```dotenv
+GROQ_API_KEY=your_groq_key
+OPENAI_API_KEY=your_openai_key
+```
+
+Do not commit `.env` files or API keys.
+
+## Run and test the server
+
+Start the server over standard input/output:
 
 ```bash
-uv init --bare --python 3.12
+uv run python server.py
 ```
 
-Install the MCP SDK **with its CLI extra**:
+For interactive testing, launch MCP Inspector:
 
 ```bash
-uv add "mcp[cli]>=1.28,<2"
+uv run mcp dev server.py
 ```
 
-This installs the SDK, the `mcp` command, and their dependencies into the project's `.venv`. It also records the dependency in `pyproject.toml` and creates or updates `uv.lock`. `uv run` uses this environment automatically, so manual activation is unnecessary.
+In Inspector, verify each part of the MCP interface:
 
-This class intentionally uses the **v1 SDK** because the sample imports `FastMCP` from `mcp.server.fastmcp`. The `<2` constraint preserves that API. See the [official v1 SDK documentation](https://github.com/modelcontextprotocol/python-sdk/tree/v1.x).
+1. **Tools**: call `get_course_list`, then call `get_course_details` with `CS 466`.
+2. **Resources**: read `course://catalog` and `courses://cs466`.
+3. **Prompts**: render `course_summary` with `course_id=CS111`.
 
-`pathlib`, `json`, and `typing` are Python standard-library modules: no installation is needed. The separate `fastmcp` package is not required for this import.
+## Server components
 
-### If the repository already includes pyproject.toml and uv.lock
+### Tools
 
-Use the committed dependencies instead of initializing the project again:
+```python
+@mcp.tool()
+def get_course_list() -> list[dict[str, Any]]:
+    """Return the available course codes and titles."""
 
-```bash
-uv sync --locked
+
+@mcp.tool()
+def get_course_details(course_id: str) -> dict[str, Any]:
+    """Return the complete record for one course."""
 ```
 
+The helper `_normalized_course_id()` treats values such as `cs 466`, `CS466`, and `CS 466` consistently.
 
-How it works
+### Resources
 
-- `FastMCP` creates the server; `@mcp.tool()` exposes each decorated function as a tool.
-- Type hints describe the tool inputs and outputs; docstrings describe each tool.
-- `_load_courses()` reads the local JSON file using UTF-8. The two underscore-prefixed helper functions are not registered as tools.
-- `_normalize_course_id()` converts IDs to uppercase and removes whitespace, so `CS111`, `cs111`, and `CS 111` match.
-- `mcp.run(transport="stdio")` exchanges MCP messages through standard input and output.
+```python
+@mcp.resource("course://catalog")
+def course_catalog() -> str:
+    return json.dumps(_load_courses(), indent=2)
 
-## 4. Run the server locally
 
-```bash
-uv run python mcpserver.py
+@mcp.resource("courses://{course_id}")
+def course_resource(course_id: str) -> str:
+    course = get_course_details(course_id)
+    return json.dumps(course, indent=2)
 ```
 
-The server waits for an MCP client to send protocol messages. A quiet terminal is normal: this command does not open a browser or create an HTTP endpoint. Press **Ctrl+C** to stop it before continuing.
+Resources are read by URI. They return data to the MCP client and are not automatically inserted into a model conversation.
 
-Avoid adding `print()` calls to standard output: stdout carries MCP messages. Use logging to stderr if you need debugging output.
+### Prompts
 
-## 5. Launch MCP Inspector
+```python
+@mcp.prompt()
+def course_summary(course_id: str) -> str:
+    return f"""
+Using the Course Assistant resources and tools,
+summarize {course_id}.
 
-From the repository folder, run:
-
-```bash
-uv run mcp dev mcpserver.py
+Include:
+- Course description
+- Major topics
+- Prerequisites
+- Learning objectives
+- Expected student outcomes
+"""
 ```
 
-The MCP development command launches Inspector using `npx`. Allow the Inspector package installation if prompted, and open the local URL printed in the terminal. Keep that terminal running while testing.
+Prompts are reusable templates. LangChain converts the prompt returned by the MCP server into chat messages.
 
-Inspector launches its own server process; you do not need to leave the server from step 4 running.
+## Connect with LangChain
 
-You can also launch Inspector explicitly:
+The notebook starts the local MCP server as a child process:
 
-```bash
-npx -y @modelcontextprotocol/inspector uv run python mcpserver.py
+```python
+from langchain_mcp_adapters.client import MultiServerMCPClient
+
+client = MultiServerMCPClient(
+    {
+        "Course_assistant": {
+            "transport": "stdio",
+            "command": "uv",
+            "args": ["run", "python", "server.py"],
+            "cwd": "/absolute/path/to/MCP-Server",
+        }
+    }
+)
 ```
 
-Use either launch command. If Inspector asks for connection settings, use:
+Update `cwd` to the absolute path of your cloned repository.
 
-| Setting | Value |
-| --- | --- |
-| Transport | `STDIO` |
-| Command | `uv` |
-| Arguments | `run python mcpserver.py` |
+### Load MCP tools
 
-Click **Connect** if it is not already connected. If you opened Inspector outside the repository folder, use absolute paths for the project and script, or relaunch from the repository folder. See the [official Inspector documentation](https://github.com/modelcontextprotocol/inspector) for launch details.
-
-## 6. Test the tools in Inspector
-
-Button labels may vary slightly by Inspector version.
-
-### List available courses
-
-1. Open **Tools** and click **List Tools** or refresh the tool list.
-2. Confirm that `get_course_list` and `get_course_details` appear.
-3. Select `get_course_list`.
-4. Leave the arguments empty (`{}` if using a JSON input editor).
-5. Click **Run Tool**.
-
-Expected behavior: a list containing `Course_id` and `Title` for every record in the supplied file. For example, if the file contains CS111:
-
-```json
-[
-  {
-    "Course_id": "CS111",
-    "Title": "AI for All"
-  }
-]
+```python
+tools = await client.get_tools(server_name="Course_assistant")
 ```
 
-This is illustrative; the actual list depends on the repository's dataset. Inspector may display the result inside MCP content or structured-output fields.
+### Load an MCP prompt
 
-### Get course details
-
-1. Select `get_course_details`.
-2. Enter an ID returned by the list tool in the required `course_id` field.
-3. Click **Run Tool**.
-
-For example, if CS111 is in the list, the JSON arguments are:
-
-```json
-{"course_id": "CS111"}
+```python
+prompts = await client.get_prompt(
+    "Course_assistant",
+    "course_summary",
+    arguments={"course_id": "CS111"},
+)
 ```
 
-Expected behavior: the entire matching JSON object, including `course_id`, `title`, and every additional field stored for that course.
+### Load an MCP resource
 
-Repeat with `cs111` and `CS 111`. Both should return the same record as `CS111`.
+```python
+resources = await client.get_resources(
+    server_name="Course_assistant",
+    uris="courses://cs466",
+)
 
-### Try an unavailable course
-
-Enter an ID that does not occur in the dataset, for example:
-
-```json
-{"course_id": "UNKNOWN999"}
+context = "\n\n".join(resource.as_string() for resource in resources)
 ```
 
-Expected behavior: a normal tool response containing an `Error` message and an `Available_courses` list. For a catalog containing only CS111, it would be:
+`get_resources()` returns LangChain `Blob` objects. Calling `as_string()` reads the text stored in each blob.
 
-```json
-{
-  "Error": "UNKNOWN999 is not available",
-  "Available_courses": ["CS111"]
-}
+### Invoke the agent
+
+```python
+from langchain.messages import HumanMessage
+
+result = await agent.ainvoke(
+    {
+        "messages": [
+            *prompts,
+            HumanMessage(
+                content=f"Course reference materials:\n{context}"
+            ),
+        ]
+    }
+)
+
+print(result["messages"][-1].content)
 ```
 
-The available IDs come from the supplied file. This not-found response is a returned dictionary, not a raised MCP execution error.
+`*prompts` unpacks the list of MCP prompt messages into the agent's message list. The resource content is supplied as user context.
+
+## Example questions
+
+- Summarize CS 466, including prerequisites and expected outcomes.
+- How many courses are available? Give each course code and title.
+- What software or course materials are required for CS 466?
+- What are three learning outcomes for CS 111?
+- Explain the grading criteria for CS 111.
 
 ## Troubleshooting
 
-| Problem | What to check |
-| --- | --- |
-| `uv` or `npx` is not found | Reopen the terminal after installing uv or Node.js and check the version commands. |
-| MCP command or import is missing | Run `uv add "mcp[cli]>=1.28,<2"` in the project folder, then launch with `uv run`. |
-| Server appears idle when run directly | This is expected with stdio. Launch Inspector to call the tools. |
-| Inspector cannot connect | Select STDIO, check the command and arguments, and launch from the repository folder. |
-| A tool fails while reading course data | Confirm that `data/courses.json` exists, is valid UTF-8 JSON, and contains an array of objects with `course_id` and `title`.
+### The client cannot start `server.py`
 
+Confirm that `cwd` points to this project and that `uv` is available from your terminal.
 
+### A resource prints as `[Blob ...]`
 
+That text is the Python representation of a LangChain `Blob`. Read its text with:
 
-# Repo and Dependencies Installations commands 
-- uv add deepagents 
-- Instal [nodeJS](https://nodejs.org/en/download) 
-- Issue: uv add langchain-mcp-adapters
-- download github-mcp-server: https://github.com/github/github-mcp-server/releases?utm_source=chatgpt.com
-- [How to generate github personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)
+```python
+print(resource.as_string())
+```
 
-#Checking for Node and npx (in the terminal): 
-node -v 
-npx -v
+### The local model does not call tools
 
-MongoDB Installations: https://www.mongodb.com/docs/manual/administration/install-community/?operating-system=macos&macos-installation-method=homebrew
+Use a model that supports tool calling and confirm that Ollama has downloaded the selected model.
 
-MongoDB CRUD operations syntax: https://www.mongodb.com/docs/manual/crud/?msockid=050612d8208b6ac13bc3054421d26b1d
-MogoDB MCP: 
+### Course data cannot be loaded
 
-MCP Documentations: https://www.mongodb.com/docs/mcp-server/get-started/?msockid=050612d8208b6ac13bc3054421d26b1d
+Keep `data/courses.json` in the repository. `server.py` resolves the file relative to its own location.
 
-Resource Links:
-- [Complete youtube playlist](https://www.youtube.com/playlist?list=PLfpB0rPkNb_8)
-- [DeepAgent](https://docs.langchain.com/oss/python/deepagents/quickstart)
-- [MCP:](https://modelcontextprotocol.io/docs/2026-07-28/getting-started/intro)
-- [Official MCP Registry:](https://registry.modelcontextprotocol.io/)
-- [MCP github:](https://github.com/modelcontextprotocol)
-- [RAG](https://docs.langchain.com/oss/python/deepagents/rag)
-- [Langgraph workflows](https://docs.langchain.com/oss/python/langgraph/workflows-agents)
-- [arxivLoader](https://reference.langchain.com/python/langchain-community/document_loaders/arxiv/ArxivLoader)
-- [arxivAPI](https://info.arxiv.org/help/api/basics.html)
-- [Langgraph memory](https://docs.langchain.com/oss/python/langgraph/add-memory#manage-checkpoints)
-- [Langgraph docs](https://docs.langchain.com/oss/python/langgraph/overview)
-- [Langchain's Pre-build Middlware](https://docs.langchain.com/oss/python/langchain/middleware/built-in)
-- [Langchain's middleware](https://docs.langchain.com/oss/python/langchain/middleware/overview)
-- [Langgraph's short-term memory](https://docs.langchain.com/oss/python/langchain/short-term-memory) 
-- [Langchain Agent](https://docs.langchain.com/oss/python/langchain/agents)
-- [DuckDuckGoSearch](https://reference.langchain.com/python/langchain-community/tools/ddg_search/tool/DuckDuckGoSearchRun)
-- [Youdotcom API Key](https://you.com/platform/api-keys) 
-- [OpenWeatherMap](https://openweathermap.org/)
-- [UV github repo](https://github.com/astral-sh/uv)
-- [langchain docs]()
-- [Groq API Key](https://console.groq.com/keys)
-- [OpenAI API Key](https://platform.openai.com/api-keys)
+## License
 
-## Install uv On macOS and Linux.
-curl -LsSf https://astral.sh/uv/install.sh | sh
+Add the license that matches how you want others to use this teaching project.
 
-## Install uv On Windows.
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-
-# for a fresh repo
-### create a project directory and issue the following commands in the project directory:
-
-uv init
-
-uv venv  
-
-source .venv/bin/activate (#activate .venv)
-
-### then install all the dependecies
-
-uv add *packagename*
-
-Examples: 
-
-uv add langchain
-
-uv add langchain-openai 
-
-uv add langchain-groq 
-
-uv add ipykernel
-
-uv add python-dotenv
-
-#### or if you have listed all the required packages in the requirements.txt, issue: 
-
-uv add -r requirements.txt
-
-
-# Installations for a cloned repo
-
-git clone https://github.com/NawazAli20/LLMsIntro
-
-if you have .toml and/or .lock file just issue
-
-uv sync 
