@@ -6,6 +6,7 @@ os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 os.environ["TAVILY_API_KEY"] = os.getenv("TAVILY_API_KEY")
 Weather_API_Key = os.getenv("OPENWEATHER_API_KEY")
 
+
 import warnings
 
 warnings.filterwarnings("ignore",category=DeprecationWarning)
@@ -13,9 +14,11 @@ warnings.filterwarnings("ignore",category=DeprecationWarning)
 from langchain.chat_models import init_chat_model
 
 #llm = init_chat_model(model="qwen/qwen3-32b", model_provider="Groq")
-llm = init_chat_model(model="llama-3.3-70b-versatile", model_provider="Groq")
+#llm = init_chat_model(model="llama-3.3-70b-versatile", model_provider="Groq")
 #llm = init_chat_model(model="gpt-5.4-mini", model_provider="OpenAI")
 #print(llm.invoke("Hi").content)
+
+llm = init_chat_model(model="gemma4:latest", model_provider="ollama")
 
 ## Create a weather tool 
 from langchain.tools import tool
@@ -58,6 +61,11 @@ ddg_search = DuckDuckGoSearchRun()
 
 ## Add memory 
 
+#long-term memory
+from langgraph.store.memory import InMemoryStore
+from langchain_core.runnables import Runnable 
+
+#short-term memory
 from langgraph.checkpoint.memory import InMemorySaver
 
 #Create LLM Agent 
@@ -70,6 +78,7 @@ agent = create_agent(
     model=llm,
     tools=tools,
     checkpointer=InMemorySaver(),
+    #store=InMemoryStore(),
     system_prompt="""
     You are an helpful chatbot assistant. Use getWeather tool for answering weather related 
     questies. Use web_search tool for recent event, finance, news and internet search. 
@@ -79,15 +88,20 @@ agent = create_agent(
 )
 
 #Create a thread ID
+#random thread id: 
+from uuid import uuid4; 
 
-thread_config = {"configurable":{"thread_id":1}}
+thread_id = str(uuid4())
+print(f"generated thread id: {thread_id}")
+
+thread_config = {"configurable":{"thread_id":thread_id}}
 
 ##Create the weather app 
 from langchain.messages import HumanMessage, SystemMessage, AIMessage
 
 while True:
     messages = []
-    user_input = input("What is your query? ")
+    user_input = input("What is your query? ").strip()
 
     if(user_input.lower() in ["bye","exit"]):
         print("Bye!")

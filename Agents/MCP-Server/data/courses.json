@@ -1,0 +1,155 @@
+[
+  {
+    "course_id": "CS 111",
+    "section": "02",
+    "title": "AI for All - Artificial Intelligence for Life, Society, and Disciplines",
+    "short_title": "AI for All",
+    "semester": "Fall 2026",
+    "credit_hours": 3.0,
+    "meeting": {
+      "days": ["Tuesday", "Thursday"],
+      "time": "3:00 PM - 4:15 PM",
+      "location": "BR 150"
+    },
+    "instructor": {
+      "name": "Dr. G. G. Md. Nawaz Ali",
+      "office": "Bradley Hall 297",
+      "office_hours": "Tuesday, Wednesday, and Thursday, 1:00 PM - 2:00 PM"
+    },
+    "course_web": "https://learn.bradley.edu/",
+    "prerequisites": "None",
+    "description": "A conceptual, applied course about artificial intelligence for students across disciplines. It emphasizes ethical reflection, entrepreneurial thinking, non-code AI and machine-learning tools, basic data wrangling, inference, visualization, responsible prompting, and critical evaluation of AI outputs for accuracy, bias, and limitations.",
+    "objectives": [
+      "Understand foundational AI concepts and terminology.",
+      "Explain how AI systems function at a conceptual level.",
+      "Learn basics of data wrangling, interpretation, and visualization.",
+      "Use AI tools such as Microsoft Copilot effectively and responsibly.",
+      "Design and refine prompts for learning, writing, analysis, and decision support.",
+      "Critically evaluate AI outputs for bias, accuracy, and limitations.",
+      "Analyze ethical, social, and professional implications of AI technologies.",
+      "Connect AI concepts to disciplinary, ethical, and societal contexts."
+    ],
+    "learning_outcomes": [
+      "Define AI in scientifically grounded terms and distinguish it from popular media portrayals.",
+      "Describe AI as an interdisciplinary field connecting computing, data, society, and ethics.",
+      "Apply AI for data interpretation and visualization.",
+      "Apply AI concepts to real-world problems relevant to an academic discipline.",
+      "Evaluate benefits, risks, and societal impacts of AI tools.",
+      "Demonstrate responsible and transparent AI usage practices.",
+      "Compare AI-assisted and non-AI approaches to problem solving.",
+      "Identify opportunities where AI can ethically create value within a discipline."
+    ],
+    "topics": [
+      "Introduction to AI",
+      "AI and society",
+      "Algorithms, planning, and search",
+      "Intelligent systems",
+      "Probabilistic reasoning",
+      "Data wrangling and AI data pipelines",
+      "Machine learning fundamentals and paradigms",
+      "Generative AI and large language models",
+      "Generative AI with Microsoft Copilot",
+      "Bias and fairness in AI",
+      "AI, work, policy, and economics",
+      "AI in students' majors",
+      "Future of AI"
+    ],
+    "materials_and_tools": [
+      "zyBook: Data Science & AI Literacy (Python Sandbox / Non-Code Focus)",
+      "Microsoft Copilot",
+      "Google Teachable Machine",
+      "Python Sandbox",
+      "UT Austin Probabilistic Demos",
+      "Canvas LMS"
+    ],
+    "grading": {
+      "participation_and_in_class_discussions": 5,
+      "in_class_labs": 10,
+      "chapter_reading_and_homework_assignments": 15,
+      "quizzes": 15,
+      "research_and_reflection_essay": 10,
+      "interdisciplinary_group_project": 15,
+      "midterm_exam": 15,
+      "final_exam": 15
+    }
+  },
+  {
+    "course_id": "CS 466",
+    "section": "01",
+    "title": "Natural Language Processing & Large Language Models (NLP & LLMs)",
+    "short_title": "NLP & LLMs",
+    "semester": "Fall 2026",
+    "credit_hours": 3.0,
+    "meeting": {
+      "days": ["Monday", "Wednesday"],
+      "time": "3:00 PM - 4:15 PM",
+      "location": "BR 160"
+    },
+    "instructor": {
+      "name": "Dr. G. G. Md. Nawaz Ali",
+      "office": "Bradley Hall 297",
+      "office_hours": "Tuesday, Wednesday, and Thursday, 1:00 PM - 2:00 PM"
+    },
+    "course_web": "https://learn.bradley.edu/",
+    "prerequisites": "CS 461 or CS 462 or consent of instructor",
+    "description": "An in-depth, hands-on study of natural language processing and large language models, progressing from foundational NLP to transformer-based models and production-style AI systems. The course emphasizes practical implementation, evaluation, Retrieval-Augmented Generation, tool-using LLMs, multi-agent systems, and neuro-symbolic reasoning.",
+    "objectives": [
+      "Explain linguistic, statistical, and neural foundations of NLP.",
+      "Implement core NLP pipelines using Python and modern libraries.",
+      "Train, fine-tune, and evaluate transformer-based language models.",
+      "Apply pre-trained LLMs for downstream NLP tasks.",
+      "Design and implement Retrieval-Augmented Generation systems.",
+      "Integrate external tools and APIs with LLMs.",
+      "Build multi-agent LLM workflows.",
+      "Analyze LLM limitations including hallucination, bias, and scalability.",
+      "Critically assess emerging trends in LLM research and deployment."
+    ],
+    "learning_outcomes": [
+      "Construct NLP pipelines for text preprocessing, representation, and modeling.",
+      "Apply word, sentence, and document embeddings effectively.",
+      "Implement transformer architectures using existing deep learning frameworks.",
+      "Fine-tune large language models for task-specific applications.",
+      "Build end-to-end LLM systems incorporating retrieval, memory, and tools.",
+      "Evaluate NLP and LLM systems using appropriate quantitative metrics.",
+      "Communicate design decisions and trade-offs in advanced AI systems."
+    ],
+    "topics": [
+      "Python review for NLP",
+      "Environment setup and LLM agents",
+      "Tool-using LLMs and function calling",
+      "LangChain agents and structured output",
+      "LangGraph agents",
+      "Retrieval-Augmented Generation",
+      "LLM guardrails",
+      "Multi-agent LLM systems",
+      "Model Context Protocol",
+      "MCP deployment with agents",
+      "Deep agents",
+      "Text processing and linguistic foundations",
+      "Classical NLP: Bag-of-Words, TF-IDF, and N-grams",
+      "Sequence models: RNNs, LSTMs, and GRUs",
+      "Transformers and attention mechanisms",
+      "Evaluation of NLP and LLM systems"
+    ],
+    "materials_and_tools": [
+      "zyBook for CS 466",
+      "VS Code",
+      "Python 3.x",
+      "PyTorch",
+      "Hugging Face Transformers and Datasets",
+      "LangChain and LangGraph",
+      "SentenceTransformers",
+      "FAISS or ChromaDB",
+      "Local GPU, Google Colab, Kaggle, or university computing resources"
+    ],
+    "grading": {
+      "in_class_activity_programming_labs_and_quizzes": 30,
+      "class_attendance": 5,
+      "chapter_reading_assignments": 8,
+      "homework_assignments": 12,
+      "midterm_exam": 15,
+      "final_project": 15,
+      "final_exam": 15
+    }
+  }
+]
