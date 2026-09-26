@@ -1,3 +1,5 @@
+[![M8ven Score](https://m8ven.ai/badge/mcp/nawazali20-mcp-server-enhanced-14b7dh?v=5e76293d48e837adb8e2410770ba9cef)](https://m8ven.ai/mcp/nawazali20-mcp-server-enhanced-14b7dh)
+
 # Course Assistant MCP Server
 
 ![MCP Resources and Prompts](assets/mcp-resources-prompts-class2.png)
