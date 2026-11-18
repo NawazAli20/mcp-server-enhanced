@@ -258,15 +258,7 @@ That text is the Python representation of a LangChain `Blob`. Read its text with
 print(resource.as_string())
 ```
 
-### The local model does not call tools
-
-Use a model that supports tool calling and confirm that Ollama has downloaded the selected model.
-
 ### Course data cannot be loaded
 
 Keep `data/courses.json` in the repository. `server.py` resolves the file relative to its own location.
-
-## License
-
-Add the license that matches how you want others to use this teaching project.
 
